@@ -1,3 +1,5 @@
+КИМ СОКДЖИН САРАНХЕЕЕЕ
+
 USE MASTER;
 GO
 IF DB_ID('Depo') IS NOT NULL
