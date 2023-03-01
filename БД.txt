@@ -1,0 +1,364 @@
+USE MASTER;
+GO
+IF DB_ID('Depo') IS NOT NULL
+	DROP DATABASE Depo;
+GO
+CREATE DATABASE Depo
+ON PRIMARY (NAME = Depo_dat, FILENAME = 'C:\SQL\depo.mdf',
+	SIZE = 5 MB,
+	MAXSIZE = UNLIMITED,
+	FILEGROWTH = 1 MB)
+LOG ON (NAME = Depo_log, FILENAME  = 'C:\SQL\depo.ldf',
+	SIZE = 2 MB,
+	MAXSIZE = 30 MB,
+	FILEGROWTH = 1 MB);
+GO
+
+/* Создание таблицы Repair*/
+USE Depo;
+GO
+IF EXISTS (SELECT * FROM sys.tables WHERE NAME = 'Repair')
+DROP TABLE Repair;
+CREATE TABLE Repair
+   (REP_ID INT NOT NULL,
+	REP_TYPE VARCHAR(39) NOT NULL,
+	REP_PRICE MONEY NOT NULL DEFAULT 0,
+	REP_QUALITY VARCHAR(40) NOT NULL,
+	REP_BEGIN DATE NOT NULL,
+	REP_END DATE NOT NULL,
+	REP_REASON VARCHAR(40) NOT NULL,
+	CONSTRAINT PK_Repair PRIMARY KEY (REP_ID) ) ;
+GO
+
+/* Создание таблицы Car*/
+USE Depo;
+GO
+IF EXISTS (SELECT * FROM sys.tables WHERE NAME = 'Car')
+DROP TABLE Car;
+CREATE TABLE Car
+(	CAR_ID INT NOT NULL,
+	CAR_TYPE VARCHAR(39) NOT NULL,
+	CAR_YEAR INT NOT NULL,
+	CAR_REGNAME VARCHAR(60) NOT NULL,
+	CAR_REGCHIEF VARCHAR(20) NOT NULL,
+	Car_REP_ID INT NOT NULL,
+	CONSTRAINT PK_Car PRIMARY KEY (CAR_ID),
+	CONSTRAINT FK_Car_Repair
+	FOREIGN KEY (Car_REP_ID) REFERENCES Repair (REP_ID)
+	ON UPDATE CASCADE ON DELETE CASCADE );
+GO
+
+/* Создание таблицы Worker*/
+USE Depo;
+GO
+IF EXISTS (SELECT * FROM sys.tables WHERE NAME = 'Worker')
+DROP TABLE Worker;
+CREATE TABLE Worker
+(	Worker_ID INT NOT NULL,
+	Worker_FIO VARCHAR(40) NOT NULL,
+	Worker_EDUC VARCHAR(15) NOT NULL,
+	Worker_EXPER INT NOT NULL,
+	Worker_PREMIA MONEY NOT NULL DEFAULT 0,
+	Worker_SPECIAL VARCHAR(30) NOT NULL,
+	Worker_NUMBERBANK VARCHAR(60) NOT NULL,
+	Worker_REP_ID INT NOT NULL,
+	CONSTRAINT PK_Worker PRIMARY KEY (Worker_ID),
+	CONSTRAINT FK_Worker_Repair
+	FOREIGN KEY (Worker_REP_ID) REFERENCES Repair (REP_ID)
+	ON UPDATE CASCADE ON DELETE CASCADE );
+GO
+
+/* Создание таблицы Railway*/
+USE Depo;
+GO
+IF EXISTS (SELECT * FROM sys.tables WHERE NAME = 'Railway')
+DROP TABLE Railway;
+CREATE TABLE Railway
+(	Railway_ID INT NOT NULL,
+	Railway_TYPE VARCHAR(30) NOT NULL,
+	Railway_BANK VARCHAR(40) NOT NULL,
+	Railway_INN VARCHAR(60) NOT NULL,
+	Railway_ADDRESSEXTERNAL VARCHAR(40) NOT NULL,
+	Railway_CAR_ID INT NOT NULL,
+	CONSTRAINT PK_Railway PRIMARY KEY (Railway_ID),
+	CONSTRAINT FK_Railway_Car
+	FOREIGN KEY (Railway_CAR_ID) REFERENCES Car (CAR_ID)
+	ON UPDATE CASCADE ON DELETE CASCADE );
+GO
+
+use Depo;
+go
+set nocount on;
+delete from Repair;
+insert into Repair(REP_ID, REP_TYPE, REP_QUALITY, REP_PRICE, REP_REASON, REP_BEGIN, REP_END) values
+(1, 'ТО-3', 'отличное', 80000, 'неисправность колесной пары', '2022-02-2', '2022-02-4'),
+(2, 'КР', 'по нормам', 1000000, 'неисправность буксового узла', '2022-02-5', '2022-02-16'),
+(3, 'ТР-3', 'по нормам', 1800000, 'неисправность колесной пары', '2022-02-17', '2022-02-20'),
+(4, 'ТР-1', 'отличное', 1200000, 'неисправность буксового узла', '2022-02-22', '2022-02-28'),
+(5, 'ТР-2', 'по нормам', 300000, 'неисправность колесной пары', '2022-03-1', '2022-03-6'),
+(6, 'КР-2', 'отличное', 200000, 'неисправность колесной пары', '2022-03-8', '2022-03-12'),
+(7, 'ТО-2', 'отличное', 100000, 'неисправность буксового узла', '2022-03-14', '2022-03-16'),
+(8, 'КР', 'по нормам', 700000, 'неисправность буксового узла', '2022-03-20', '2022-03-27'),
+(9, 'ТО-3', 'отличное', 800000, 'неисправность колесной пары', '2022-04-1', '2022-04-8'),
+(10, 'ТО-2', 'отличное', 600000, 'неисправность буксового узла', '2022-04-10', '2022-04-17');
+GO
+
+use Depo
+go
+set nocount on;
+delete from Car;
+insert into Car(CAR_ID, Car_REP_ID, CAR_TYPE, CAR_YEAR, CAR_REGCHIEF, CAR_REGNAME) values
+(1, 1, 'купейный', 1998, '008-009', '3C21'),
+(2, 2, 'св', 2001, '010', 'H87'),
+(3, 3, 'плацкартный', 2002, '013-014', 'L22'),
+(4, 4, 'почтовый', 2004, '017-023', '0N23'),
+(5, 5, 'багажный', 2005, '001-004', '9D1');
+GO
+
+use Depo
+go
+set nocount on;
+delete from Worker;
+insert into Worker(Worker_ID, Worker_REP_ID, Worker_FIO, Worker_EDUC, Worker_EXPER, Worker_SPECIAL, Worker_PREMIA, Worker_NUMBERBANK) values
+(1, 1, 'Винилов Сергей Петрович', 'Высшее', 38, 'Инженер путей сообщения', 50000, '4243567832149088'),
+(2, 2, 'Романова Ольга Михайловна', 'Высшее', 33, 'Технолог', 43000, '4156227863728199'),
+(3, 3, 'Дворин Алексей Александрович', 'Высшее', 30, 'Бригадир сервисного депо', 55000, '4021445678920127'),
+(4, 4, 'Зверев Павел Георгевич', 'Высшее', 40, 'Главный инженер', 54000, '4456789832115642'),
+(5, 5, 'Кротов Дмитрий', 'Высшее', 29, 'Начальник депо', 41000, '4189001182456638'),
+(6, 6, 'Горохов Петр Иванович', 'Высшее', 34, 'Машинист констуктор', 47000, '4230786543251182'),
+(7, 7, 'Некрасова Мария Николаевна', 'Высшее', 28, 'Мастер производств. участка', 46000, '4567987263667530');
+GO
+
+use Depo
+go
+set nocount on;
+delete from Railway;
+insert into Railway(Railway_ID, Railway_CAR_ID, Railway_TYPE, Railway_INN, Railway_BANK, Railway_ADDRESSEXTERNAL) values
+(1, 1, 'внешняя', '52677872389474324', 'ВТБ', 'ул. Некрасова, 22'),
+(2, 2, 'внешняя', '52908803948847498', 'ВТБ', 'ул. Попова, 30'),
+(3, 3, 'местная', '55392847856902323', 'ВТБ', 'ул. Звездная, 2'),
+(4, 4, 'местная', '55982309428537021', 'ВТБ', 'ул. Мельничная, 21'),
+(5, 5, 'внешняя', '52920909483534572', 'ВТБ', 'ул. Романова, 32');
+GO
+
+USE Depo;
+GO
+SELECT MAX (Worker_PREMIA) AS maximum, MIN(Worker_PREMIA) AS minimum
+from Worker;
+go
+
+use Depo;
+go
+select * from Worker where Worker_EDUC = 'Высшее';
+go
+
+use Depo;
+go
+select Car.CAR_TYPE as [Тип вагона],
+	Railway.Railway_TYPE as [Тип жд]
+from Car left join Railway
+on Car.CAR_ID=Railway_CAR_ID;
+go
+
+use Depo;
+go
+select REP_TYPE from Repair
+where REP_ID = '1' (select Worker_FIO, Worker_SPECIAL, Worker_EXPER from Worker where Worker_REP_ID = 1)
+go
+
+use Depo
+go
+create view worker_view
+as
+select Worker_ID as [код], Worker_PREMIA as [премия]
+from Worker
+go
+
+use Depo
+go
+create view worker_view
+as
+select Worker_ID as [код], Worker_PREMIA as [премия]
+from Worker
+go
+
+use Depo;
+go
+if OBJECT_ID('repair_insert', 'P') is not null
+drop procedure repair_insert;
+go
+create procedure repair_insert (
+@REP_ID INT,
+@REP_TYPE VARCHAR(40),
+@REP_PRICE MONEY,
+@REP_QUALITY VARCHAR(40),
+@REP_BEGIN DATE,
+@REP_END DATE,
+@REP_REASON VARCHAR(40) )
+as
+begin
+	set nocount on;
+	insert into Repair (
+		REP_ID, REP_TYPE, REP_PRICE, 
+		REP_QUALITY, REP_BEGIN, REP_END, REP_REASON)
+	values (
+		@REP_ID, @REP_TYPE, @REP_PRICE, @REP_QUALITY, @REP_BEGIN, @REP_END, @REP_REASON)
+	return @@error
+end
+go
+
+use Depo;
+go
+execute Depo.dbo.repair_insert 11, 'ТО-3', 90000, 'по нормам', '2022-04-20', '2022-04-22', 'неисправность колесной пары'
+go
+
+
+use Depo;
+go
+if OBJECT_ID('repair_update', 'P') is not null
+drop procedure repair_update;
+go
+create procedure repair_update (
+@REP_ID INT,
+@REP_TYPE VARCHAR(40),
+@REP_PRICE MONEY,
+@REP_QUALITY VARCHAR(40),
+@REP_BEGIN DATE,
+@REP_END DATE,
+@REP_REASON VARCHAR(40) )
+as
+begin
+	set nocount on;
+	update Repair
+	set
+		REP_ID=@REP_ID,
+		REP_TYPE=@REP_TYPE,
+		REP_PRICE=@REP_PRICE,
+		REP_QUALITY=@REP_QUALITY,
+		REP_BEGIN=@REP_BEGIN,
+		REP_END=@REP_END,
+		REP_REASON=@REP_REASON
+	WHERE REP_ID=@REP_ID;
+	return @@error
+end
+go
+
+USE Depo;
+GO
+EXECUTE repair_update 11, 'ТО-3', 90000, 'по нормам', '2022-04-20', '2022-04-22', 'неисправность колесной пары'
+go
+
+use Depo;
+go
+if OBJECT_ID('railway_select', 'P') is not null
+drop procedure railway_select;
+go
+create procedure railway_select (
+@Railway_TYPE VARCHAR(30) = NULL,
+@Railway_BANK VARCHAR(40) = NULL,
+@Railway_INN VARCHAR(60) = NULL,
+@Railway_ADDRESSEXTERNAL VARCHAR(40) = NULL,
+@Railway_CAR_ID INT = NULL )
+as
+begin
+set nocount on;
+select
+Railway.Railway_CAR_ID,
+Railway.Railway_TYPE,
+Railway.Railway_INN,
+Railway.Railway_ADDRESSEXTERNAL,
+Car.CAR_ID as [код вагона]
+from Railway
+left outer join Car on Car.CAR_ID = Railway.Railway_CAR_ID
+where (CAR_ID is not null or Car.CAR_ID = CAR_ID)
+end
+go
+
+use Depo;
+go
+exec railway_select;
+go
+
+use Depo;
+go
+if OBJECT_ID ('repair_delete', 'P') is not null
+drop procedure repair_delete;
+go
+create procedure repair_delete (
+@REP_ID int = null)
+as
+begin
+set nocount on;
+delete from Repair
+where REP_ID = @REP_ID;
+return @@ERROR
+end
+go
+
+use Depo;
+go
+execute repair_delete 11
+print @@ERROR
+go
+
+use Depo;
+go
+declare @Worker_FIO varchar(40), @Worker_EDUC VARCHAR(15), @Worker_SPECIAL VARCHAR(30),
+@message varchar(50);
+print 'Список работников с высшим образованием';
+declare cur cursor local for
+select Worker_FIO, Worker_EDUC, Worker_SPECIAL
+from Worker
+where Worker_EDUC = 'Высшее'
+open cur;
+fetch next from cur into @Worker_FIO, @Worker_EDUC, @Worker_SPECIAL;
+while @@FETCH_STATUS = 0
+begin
+select @message = @Worker_FIO + ' ' + @Worker_EDUC + ' ' + @Worker_SPECIAL;
+print @message;
+fetch next from cur into @Worker_FIO, @Worker_EDUC, @Worker_SPECIAL;
+end;
+close cur;
+deallocate cur;
+print @Worker_FIO + ' ' + @Worker_SPECIAL;
+
+use Depo;
+create table EX_Worker(
+ex_Worker_ID int not null,
+ex_Worker_REP_id int not null,
+ex_Worker_FIO VARCHAR(40) not null,
+ex_Worker_EDUC VARCHAR(15) not null,
+ex_Worker_EXPER iNT not null,
+ex_Worker_PREMIA MONEY not null DEFAULT 0,
+ex_Worker_SPECIAL VARCHAR(30) not null
+primary key (ex_Worker_ID));
+go
+
+use Depo;
+go
+if OBJECT_ID('EX_id', 'P') is not null
+drop procedure EX_id;
+go
+create procedure EX_id
+as
+begin
+declare @Worker_ID int,
+@Worker_REP_ID int,
+@Worker_EXPER int;
+declare cur cursor local for
+select * from Worker
+where Worker_ID between 1 and 7;
+open cur;
+fetch next from cur
+into @Worker_ID, @Worker_REP_ID, @Worker_EXPER;
+while @@FETCH_STATUS=0
+	begin
+		insert into EX_Worker values
+			(@Worker_ID, @Worker_REP_ID, @Worker_EXPER);
+		fetch next from cur into @Worker_ID, @Worker_REP_ID, @Worker_EXPER;
+	end;
+close cur;
+deallocate cur;
+end;
+go
+
